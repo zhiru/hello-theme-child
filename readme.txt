@@ -1,67 +1,83 @@
-=== Hello Elementor Child ===
+=== Hello Elementor Child - Aireset ===
 
-Contributors: elemntor, KingYes, ariel.k, jzaltzberg, mati1000, bainternet
-Requires at least: WordPress 4.7
-Tested up to: WordPress 5.2
-Stable tag: 1.0.0
-Version: 1.0.1
-Requires PHP: 5.4
-License: GNU General Public License v3 or later
-License URI: https://www.gnu.org/licenses/gpl-3.0.html
-Tags: flexible-header, custom-colors, custom-menu, custom-logo, editor-style, featured-images, rtl-language-support, threaded-comments, translation-ready
+Contributors: felipealmeman, aireset, elemntor, KingYes, ariel.k, jzaltzberg, mati1000, bainternet  
+Author: Felipe Almeman  
+Author URI: https://aireset.com.br  
+Requires at least: WordPress 4.7  
+Tested up to: WordPress 6.5  
+Stable tag: 1.0.1  
+Version: 1.0.1  
+Requires PHP: 5.6  
+License: GNU General Public License v3 or later  
+License URI: https://www.gnu.org/licenses/gpl-3.0.html  
+Tags: flexible-header, custom-colors, custom-menu, custom-logo, editor-style, featured-images, rtl-language-support, threaded-comments, translation-ready, optimized, woocommerce  
 
-The Hello Elementor Child Theme is a starter blank child theme for [Hello Elementor](https://wordpress.org/themes/hello-elementor/) theme.
+The Hello Elementor Child - Aireset is a clean, lightweight, and highly optimized child theme for [Hello Elementor](https://wordpress.org/themes/hello-elementor/)—developed and maintained by Felipe Almeman at Aireset (https://aireset.com.br).
 
-***Hello Elementor*** is distributed under the terms of the GNU GPL v3 or later.
+***Hello Elementor Child - Aireset*** is distributed under the terms of the GNU GPL v3 or later.
 
 == Description ==
 
-A basic, plain-vanilla, lightweight theme, best suited for building your site using Elementor page builder.
+Hello Elementor Child - Aireset é um tema filho minimalista e profissional, pronto para produção, totalmente otimizado para performance, SEO, segurança e personalizações avançadas no WordPress com Elementor.
 
-This theme resets the WordPress environment and prepares it for smooth operation of Elementor.
+Ideal para desenvolvedores, agências e criadores que desejam uma base enxuta, segura e fácil de manter, com todos os recursos do tema Hello Elementor, mas com otimizações e funções avançadas implementadas por padrão:
+
+* Limpeza de scripts e estilos desnecessários para sites mais rápidos.
+* Otimização do carregamento do head e dos recursos CSS/JS.
+* Suporte total a WooCommerce e principais plugins.
+* Facilidade para aplicar customizações via painel ou código.
+* Estrutura preparada para profissionais e agências, mantendo compatibilidade total com updates do tema pai.
+
+**Destaques:**
+- Desenvolvido por Felipe Almeman, Aireset (https://aireset.com.br)
+- Compatível com Elementor Free e Pro
+- Pronto para produção, SEO, performance e segurança
+- Código limpo, fácil de expandir
 
 Screenshot's images & icons are licensed under: Creative Commons (CC0), https://creativecommons.org/publicdomain/zero/1.0/legalcode
 
 == Installation ==
 
-1. In your admin panel, go to Appearance > Themes and click the 'Add New' button.
-2. Click 'Upload theme' and upload the zipped child
-3. Click on the 'Activate' button to use your new theme right away.
-4. Navigate to Elementor and start building your site.
+1. No painel do WordPress, acesse Aparência > Temas e clique em "Adicionar Novo".
+2. Clique em "Fazer upload de tema" e envie o arquivo zip do tema filho.
+3. Clique em "Ativar" para começar a usar.
+4. Navegue até Elementor e comece a construir seu site com performance e liberdade total.
 
 == Customizations ==
 
-Most users will not need to edit the files for customizing this theme.
-To customize your site's appearance, simply use ***Elementor***.
+A maioria das personalizações pode ser feita diretamente pelo Elementor.
+Para ajustes avançados, utilize o arquivo `functions.php` do tema filho, mantendo seu código sempre seguro mesmo com updates do tema pai.
 
-However, if you have a particular need to adapt this theme, please read on.
+== FAQ ==
 
-== Frequently Asked Questions ==
+**Quais plugins são compatíveis?**  
+Compatível com WooCommerce, Elementor Pro, JetPlugins e outros plugins populares.
 
-**Does this theme support any plugins?**
+**Posso adicionar estilos personalizados via CSS?**  
+Sim, mas recomendamos usar o painel do Elementor sempre que possível para facilitar manutenção.
 
-Hello Elementor includes support for WooCommerce.
+== Credits ==
 
-**Can Font Styles be added thru the theme's css file?**
+Desenvolvido por Felipe Almeman, Aireset - https://aireset.com.br  
+Baseado no Hello Elementor, com agradecimento à equipe Elementor e colaboradores originais.
 
-Yes, ***but*** best practice is to use the styling capabilities in the Elementor plugin.
-
-== Copyright ==
-
-This theme, like WordPress, is licensed under the GPL.
-Use it as your springboard to building a site with ***Elementor***.
+Este tema, assim como o WordPress, é licenciado sob GPL. Use como base para seus projetos Elementor.
 
 Hello Elementor bundles the following third-party resources:
 
-Font Awesome icons for theme screenshot
-License: SIL Open Font License, version 1.1.
-Source: https://fontawesome.com/v4.7.0/
+- Font Awesome icons for theme screenshot  
+  License: SIL Open Font License, version 1.1.  
+  Source: https://fontawesome.com/v4.7.0/
 
-Image for theme screenshot, Copyright Jason Blackeye
-License: CC0 1.0 Universal (CC0 1.0)
-Source: https://stocksnap.io/photo/4B83RD7BV9
+- Image for theme screenshot, Copyright Jason Blackeye  
+  License: CC0 1.0 Universal (CC0 1.0)  
+  Source: https://stocksnap.io/photo/4B83RD7BV9
 
 == Changelog ==
 
+= 1.0.1 - 2024-07-02 =
+* Otimizações de performance, head, scripts e compatibilidade.
+
 = 1.0.0 - 2019-05-23 =
 * Initial Public Release
+
