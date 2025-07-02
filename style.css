@@ -31,9 +31,14 @@ p {
 a {
 	background-color: transparent; 
 	text-decoration: none;
+	outline:none;
+}
+button{
+	outline:none;
 }
 
-body .comments-area a, body .page-content a {
+body .comments-area a, 
+body .page-content a {
     text-decoration: none;
 }
 

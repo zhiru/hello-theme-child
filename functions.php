@@ -1,396 +1,218 @@
 <?php
 /**
- * Theme functions and definitions
+ * Theme functions and definitions.
  *
- * @package HelloElementorChild
+ * For additional information on potential customization options,
+ * read the developers' documentation:
+ *
+ * https://developers.elementor.com/docs/hello-elementor-theme/
+ *
+ * @package HelloElementorOptimizedChild
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+define( 'HELLO_ELEMENTOR_CHILD_VERSION', '1.0.5' );
+
 /**
- * Load child theme css and optional scripts
+ * Load optimized child theme scripts & styles.
  *
  * @return void
  */
-function hello_elementor_child_enqueue_scripts() {
-	wp_enqueue_style(
-		'hello-elementor-child-style',
-		get_stylesheet_directory_uri() . '/style.css',
-		[
-			'hello-elementor-theme-style',
-		],
-		'1.0.0'
-	);
-}
-add_action( 'wp_enqueue_scripts', 'hello_elementor_child_enqueue_scripts', 20 );
 
-remove_image_size( 'thumbnail' );
-remove_image_size( 'medium' );
-remove_image_size( 'medium_large' );
-remove_image_size( 'large' );
-remove_image_size( '1536x1536' );
-remove_image_size( '2048x2048' );
-remove_image_size( '2560×2560' );
+class HelloElementorOptimizedChild{
+	private static $instance = null;
 
-add_image_size( 'banner size', 1920, 600 );
-add_image_size( 'banner mobile size', 1080, 1080 );
-add_image_size( 'produto size', 500, 500 );
-add_image_size( 'produto size table', 600, 600 );
-add_image_size( 'produto size 2', 1080, 1080 );
-add_image_size( 'micro banners size', 430, 260 );
+	public static function get_instance(){
+        if (is_null(self::$instance)) {
+            self::$instance = new self;
+        }
+        return self::$instance;
+    }
+    function __construct() {
 
-add_filter( 'wc_add_to_cart_message_html', '__return_false' );
-add_filter( 'woocommerce_notice_types', '__return_empty_array' );
+		add_action('admin_init', array($this,'check_update_theme_func'));
 
+		add_action('wp_enqueue_scripts', array($this,'hello_elementor_child_scripts_styles'), 20 );
+		add_action('wp_head', array($this,'wp_head_func'));
+		add_action('wp_head', array($this,'capturar_contenido_head'), 0);
+		add_action('wp_head', array($this,'agrupar_meta_y_link'), 999);
+		add_filter('the_generator', '__return_null' );
 
-function my_yith_wcas_submit_label( $label ) { 
-    return '' . $label; 
-}
+		add_filter('style_loader_src', array($this,'remove_css_js_version'), 9999 );
+		add_filter('script_loader_src', array($this,'remove_css_js_version'), 9999 );		
+		add_filter('style_loader_tag', array($this,'delay_rel_preload_func'), 10, 4 );
 
-add_filter( 'yith_wcas_submit_as_input', '__return_false' );
-add_filter( 'yith_wcas_submit_label', 'my_yith_wcas_submit_label' );
+	    	add_filter('rest_url_prefix', array($this,'change_name_api_slug_func')); 
+		add_filter('json_url_prefix', array($this,'change_name_api_slug_func')); 
 
-/**
- * @snippet       Pay for Order if Logged Out - WooCommerce Order Pay
- * @how-to        Get CustomizeWoo.com FREE
- * @author        Rodolfo Melogli
- * @compatible    WooCommerce 8
- * @donate $9     https://businessbloomer.com/bloomer-armada/
- */
-// add_filter( 'user_has_cap', 'bbloomer_order_pay_without_login', 9999, 3 );
+	    	add_filter('rest_authentication_errors', array($this,'security_api_wp_func')); 
 
-add_filter( 'user_has_cap', 'aireset_order_pay_without_login', 9999, 3 );
+		if ( did_action( 'elementor/loaded' ) ) {
+			add_action('wp_body_open', array($this,'inicio_contenido'),10);
+			add_action('wp_footer', array($this,'final_resultado_contenido'),10);		
+		}
+    }
 
-if(!function_exists('aireset_order_pay_without_login')){
-	function aireset_order_pay_without_login( $allcaps, $caps, $args ) {
-	   if ( isset( $caps[0], $_GET['key'] ) ) {
-		  if ( $caps[0] == 'pay_for_order' ) {
-			 $order_id = isset( $args[2] ) ? $args[2] : null;
-			 $order = wc_get_order( $order_id );
-			 if ( $order ) {
-				$allcaps['pay_for_order'] = true;
-			 }
-		  }
-	   }
-	   return $allcaps;
+	private function curl_get_contents($url,$agent=''){
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+		curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		$data = curl_exec($ch);
+		$codigo_estado = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+		return $codigo_estado == '200' ? $data : false;
 	}
-}
- 
-add_filter( 'woocommerce_order_email_verification_required', '__return_false', 9999 );
 
-add_filter( 'option_active_plugins', function ( $wp_enabled_plugins ) {
-    if ( defined( 'DOING_AJAX' ) && DOING_AJAX ) {
-        // Aqui você remove o plugin JetElements da lista de plugins ativos
-        $key = array_search( 'jet-elements/jet-elements.php', $wp_enabled_plugins );
-        if ( false !== $key ) {
-            unset( $wp_enabled_plugins[$key] );
-        }
-    }
-    return $wp_enabled_plugins;
-});
+	public function check_update_theme_func(){
+		$get_theme = wp_get_theme();
+		$author = !empty($get_theme->get( 'Author' )) ? $get_theme->get( 'Author' ) : '';
+		$template = !empty($get_theme->get( 'ThemeURI' )) ? basename($get_theme->get( 'ThemeURI' )) : '';
+		$version_actual = !empty($get_theme->get( 'Version' )) ? basename($get_theme->get( 'Version' )) : '';
 
-function add_custom_order_status() {
-    register_post_status( 'wc-payed', array(
-        'label'                     => 'Pedido Pago',
-        'public'                    => true,
-        'show_in_admin_status_list' => true,
-        'show_in_admin_all_list'    => true,
-        'exclude_from_search'       => false,
-        'label_count'               => _n_noop( 'Pedidos Pagos <span class="count">(%s)</span>', 'Pedidos Pago <span class="count">(%s)</span>' )
-    ) );
-    register_post_status( 'wc-partial-payed', array(
-        'label'                     => 'Pedido Pago Parcialmente',
-        'public'                    => true,
-        'show_in_admin_status_list' => true,
-        'show_in_admin_all_list'    => true,
-        'exclude_from_search'       => false,
-        'label_count'               => _n_noop( 'Pedidos Pagos Parcialmente <span class="count">(%s)</span>', 'Pedidos Pago Parcialmente <span class="count">(%s)</span>' )
-    ) );
-    register_post_status( 'wc-order-sended', array(
-        'label'                     => 'Pedido Enviado',
-        'public'                    => true,
-        'show_in_admin_status_list' => true,
-        'show_in_admin_all_list'    => true,
-        'exclude_from_search'       => false,
-        'label_count'               => _n_noop( 'Pedidos Enviados <span class="count">(%s)</span>', 'Pedidos Enviados <span class="count">(%s)</span>' )
-    ) );
-    register_post_status( 'wc-in-separation', array(
-        'label'                     => 'Em Separação',
-        'public'                    => true,
-        'show_in_admin_status_list' => true,
-        'show_in_admin_all_list'    => true,
-        'exclude_from_search'       => false,
-        'label_count'               => _n_noop( 'Em Separação <span class="count">(%s)</span>', 'Em Separação <span class="count">(%s)</span>' )
-    ) );
-}
-add_action( 'init', 'add_custom_order_status' );
+		$repositorio = "{$author}/{$template}";
+		$url_release = "https://api.github.com/repos/{$repositorio}/releases/latest";
+		$datos = $this->curl_get_contents($url_release,$template);
 
-function edit_default_order_status_titles( $order_statuses ) {
-    // Editando os status padrões
-    if ( isset( $order_statuses['wc-on-hold'] ) ) {
-        $order_statuses['wc-on-hold'] = 'Aguardando Confirmação'; // Novo título para 'on-hold'
-    }
-    if ( isset( $order_statuses['wc-pending'] ) ) {
-        $order_statuses['wc-pending'] = 'Pagamento Pendente'; // Novo título para 'pending'
-    }
-    if ( isset( $order_statuses['wc-processing'] ) ) {
-        $order_statuses['wc-processing'] = 'Processando'; // Novo título para 'pending'
-    }
-    if ( isset( $order_statuses['wc-cancelled'] ) ) {
-        $order_statuses['wc-cancelled'] = 'Cancelado'; // Novo título para 'pending'
-    }
-    if ( isset( $order_statuses['wc-order-completed'] ) ) {
-        $order_statuses['wc-order-completed'] = 'Concluído'; // Novo título para 'pending'
-    }
-    if ( isset( $order_statuses['wc-order-refunded'] ) ) {
-        $order_statuses['wc-order-refunded'] = 'Reembolsado'; // Novo título para 'pending'
-    }
-    if ( isset( $order_statuses['wc-order-failed'] ) ) {
-        $order_statuses['wc-order-failed'] = 'Malsucedido'; // Novo título para 'pending'
-    }
+		if ($datos === FALSE) { return false; }
+
+		$release = json_decode($datos, true);
+		$version_disponible = isset($release['tag_name']) ? $release['tag_name'] : false;
+
+		if ($version_disponible === FALSE) { return false; }
+
+		if (version_compare($version_actual, $version_disponible, '<')) {
+			add_action('admin_notices', array($this,'admin_notices_check_update_theme_func'));
+		}
+	}
+
+	public function admin_notices_check_update_theme_func(){
+		?>
+		<div class="notice notice-warning is-dismissible">
+			<p><strong><?php _e('New theme update available!', 'default'); ?></strong> 
+			<?php printf(__('A new version of your theme is available. <a href="%s" target="_blank">Click here to get it</a>.', 'default'), 'https://github.com/usuario/repositorio/releases'); ?></p>
+		</div>
+		<?php
+	}
+
+	public function hello_elementor_child_scripts_styles() {
+
+		wp_dequeue_style( 'classic-theme-styles' );
 	
-    $new_order_statuses = array();
-    foreach ( $order_statuses as $key => $status ) {
-        $new_order_statuses[ $key ] = $status;
-        if ( 'wc-processing' === $key ) {
-            $new_order_statuses['wc-payed'] = 'Pedido Pago';
-            $new_order_statuses['wc-partial-payed'] = 'Pedido Pago Parcialmente';
-            $new_order_statuses['wc-order-sended'] = 'Pedido Enviado';
-            $new_order_statuses['wc-in-separation'] = 'Em Separação';
-        }
-    }
-    return $new_order_statuses;
+		wp_enqueue_style('hello-elementor-child-style',get_stylesheet_directory_uri() . '/style.css',['hello-elementor-theme-style'], HELLO_ELEMENTOR_CHILD_VERSION);
+	
+		if(!is_admin()): 
+			$ver = '3.7.1'; // Update this to change the jQuery version.
+			wp_dequeue_script( 'jquery' );
+			wp_deregister_script( 'jquery' );
+			wp_register_script( 'jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/' . $ver . '/jquery.min.js', false, $ver, true );
+			wp_enqueue_script( 'jquery' );
+			/* */
+			wp_dequeue_style('global-styles');
+			wp_dequeue_style('wp-block-library');
+			wp_dequeue_style('wp-block-library-theme');
+			wp_dequeue_style('wc-blocks-style'); 
+		   	wp_dequeue_script('smartmenus');
+		endif;
+
+	}
+
+	public function wp_head_func(){
+		remove_action('wp_head', 'wp_generator');
+		$viewport_content = apply_filters( 'hello_elementor_viewport_content', 'width=device-width, initial-scale=1' );
+		$enable_skip_link = apply_filters( 'hello_elementor_enable_skip_link', true );
+		$skip_link_url = apply_filters( 'hello_elementor_skip_link_url', '#content' );    
+		?>
+		<meta charset="<?php bloginfo( 'charset' ); ?>">
+		<meta name="viewport" content="<?php echo esc_attr( $viewport_content ); ?>">
+		<link rel="profile" href="https://gmpg.org/xfn/11">    
+		<?php
+	}
+
+	public function capturar_contenido_head(){
+		ob_start();
+	}
+
+	public function agrupar_meta_y_link(){
+		$html = '';
+	    $head_content = ob_get_clean();
+	    preg_match_all('/<meta[^>]+>/', $head_content, $meta_tags);
+	    preg_match_all('/<link[^>]+>/', $head_content, $link_tags);
+	    $head_content_sin_meta_link = preg_replace('/<(meta|link)[^>]+>/', '', $head_content);
+	    $html .= '<!-- ola.marketing -->'. "\n";
+	    if (!empty($meta_tags[0])) {
+	        $html .= implode("\n", $meta_tags[0]) . "\n";
+	    }
+	    if (!empty($link_tags[0])) {
+	        $html .= implode("\n", $link_tags[0]) . "\n";
+	    }
+	    echo $html . $head_content_sin_meta_link;
+	}
+
+	public function remove_css_js_version($src){
+		if( strpos( $src, '?ver=' ) )
+        $src = remove_query_arg( 'ver', $src );
+    	return $src;
+	}
+
+	public function change_name_api_slug_func( $slug ) { 
+	    return 'api';
+	}
+
+	public function security_api_wp_func($access){
+		if ( !is_user_logged_in() ) {
+			return new WP_Error('rest_disabled',
+				__( 'The WordPress REST API has been disabled.' ),
+				array('status' => rest_authorization_required_code(),)
+			);
+		}
+	}
+
+	public function delay_rel_preload_func($tag, $handle, $src, $media){
+		if (is_admin()) return $tag;
+		if (str_contains($handle, 'widget-')) { return $tag; }
+	
+        $nonce = wp_create_nonce();
+        $nonce = " nonce='{$nonce}'";
+        
+        ob_start();
+        ?>
+        <link rel="preload" id="<?php echo $handle; ?>-css" href="<?php echo $src; ?>" as='style' media="<?php echo $media; ?>" <?php echo $nonce; ?> />
+        <script <?php echo $nonce; ?>>
+        let css = document.getElementById('<?php echo $handle; ?>-css');
+        css.addEventListener("load", function( e ){ 
+        e.currentTarget.rel='stylesheet';
+        },{once:true});
+        </script>
+        <noscript><?php echo trim($tag); ?></noscript>
+        <?php
+        $ga = ob_get_contents();
+		ob_end_clean();
+		$_tag = preg_replace('/[\x00-\x1F\xFF]/','',$ga);
+		
+        return $tag;
+	}
+
+	public function inicio_contenido(){
+		if ( \Elementor\Plugin::$instance->editor->is_edit_mode() ) { return false;}
+		if ( \Elementor\Plugin::$instance->preview->is_preview_mode() ) {return false;}
+		ob_start();
+	}
+
+	public function final_resultado_contenido(){
+		if ( \Elementor\Plugin::$instance->editor->is_edit_mode() ) { return false;}
+		if ( \Elementor\Plugin::$instance->preview->is_preview_mode() ) {return false;}
+		$code = ob_get_clean();
+		$cleaned_code = trim(preg_replace('/\s+/', ' ', $code));
+		$formatted_code = preg_replace('/>\s*</', ">\n<", $cleaned_code);
+		echo '<!-- ----- Optimized ----- -->'."\n";
+		echo $formatted_code;
+	}	
+
 }
-add_filter( 'wc_order_statuses', 'edit_default_order_status_titles' );
-
-function custom_order_status_color() {
-    ?>
-    <style>
-        .order-status.status-wc-on-hold { background: #f7a400; }
-        .order-status.status-wc-pending { background: #3d3d3d; }
-        .order-status.status-wc-processing { background: #cccc00; }
-        .order-status.status-wc-cancelled { background: #e50000; }
-        .order-status.status-wc-payed { background: #44ce00; }
-        .order-status.status-wc-partial-payed { background: #44ce00; }
-        .order-status.status-wc-in-separation { background: #214dd1; }
-        .order-status.status-wc-order-sended { background: #00c130; }
-        .order-status.status-wc-order-completed { background: #007fe0; }
-        .order-status.status-wc-order-refunded { background: #898989; }
-        .order-status.status-wc-order-failed { background: #ea4f4f; }		
-    </style>
-    <?php
-}
-add_action('admin_head', 'custom_order_status_color');
-
-function add_custom_order_status_bulk_actions($bulk_actions) {
-    $bulk_actions['mark_on-hold'] = 'Marcar como aguardando';
-    $bulk_actions['mark_pending'] = 'Marcar como pendente';
-    $bulk_actions['mark_processing'] = 'Marcar como processando';
-    $bulk_actions['mark_cancelled'] = 'Marcar como cancelado';	
-    $bulk_actions['mark_payed'] = 'Marcar como pago';
-    $bulk_actions['mark_partial_payed'] = 'Marcar como pago parcialmente';
-    $bulk_actions['mark_in-separation'] = 'Marcar como em separação';
-    $bulk_actions['mark_order-sended'] = 'Marcar como pedido enviado';
-    $bulk_actions['mark_order-completed'] = 'Marcar como concluído';
-	$bulk_actions['mark_order-refunded'] = 'Marcar como reembolsado';
-	$bulk_actions['mark_order-failed'] = 'Marcar como falho';
-    return $bulk_actions;
-}
-add_filter('bulk_actions-edit-shop_order', 'add_custom_order_status_bulk_actions');
-
-
-function include_custom_order_status_in_reports( $order_statuses ) {
-    $order_statuses[] = 'wc-payed'; // Adiciona o status personalizado aos relatórios
-    $order_statuses[] = 'wc-partial-payed'; // Adiciona o status personalizado aos relatórios
-    $order_statuses[] = 'wc-order-sended'; // Adiciona o status personalizado aos relatórios
-    $order_statuses[] = 'wc-in-separation';
-    return $order_statuses;
-}
-add_filter( 'woocommerce_reports_order_statuses', 'include_custom_order_status_in_reports' );
-
-
-
-// function yasglobal_redundant_hyphens() {
-//   return true;
-// }
-// add_filter( 'custom_permalinks_redundant_hyphens', 'yasglobal_redundant_hyphens' );
-
-// function yasglobal_permalink_before_saving( $permalink, $post_id ) {
-//   // Check trialing slash in the permalink.
-//   if ( substr( $permalink, -1 ) !== '/' ) {
-//     // If permalink doesn't contain trialing slash then add one.
-//     $permalink .= '/';
-//   }
-
-//   return $permalink;
-// }
-// add_filter( 'custom_permalink_before_saving', 'yasglobal_permalink_before_saving', 10, 2 );
-
-/*
-if(!function_exists('custom_orders_list_column_content')){
-    add_action( 'manage_shop_order_posts_custom_column' , 'custom_orders_list_column_content', 50, 2 );
-    
-    function custom_orders_list_column_content( $column, $post_id ) {
-        if ( $column == 'order_number' )
-        {
-            global $the_order;
-    
-            if( $phone = $the_order->get_billing_phone() ){
-                $phone_wp_dashicon = '<span class="dashicons dashicons-phone"></span> ';
-                echo '<br>Celular: '.'<a href="tel:'.$phone.'" target="_blank">' . $phone.'</a></strong>';
-                $status = wc_get_order_status_name($the_order->get_status());
-                $text = urlencode("Olá ". $the_order->get_billing_first_name() .", tudo bem? ". PHP_EOL ."Vimos que você fez o pedido ". $the_order->get_id() ." que está como ". $status . ", conte para nós como podemos te ajudar?");
-                echo '<br>Whatsapp: '.'<a href="https://wa.me/55'.preg_replace("/[^0-9]/", "",$phone).'?text='. $text .'" target="_blank">' . $phone.'</a></strong>';
-            }
-    
-            if( $email = $the_order->get_billing_email() ){
-                echo '<br>Email: '.'<a href="mailto:'.$email.'" target="_blank">' . $email . '</a>';
-            }
-        }
-    }
-}
-
-function simulador_produto_frenet(){
-	?>
-	<div id="productPageSimulator"><?=WC_Frenet_Shipping_Simulator::simulator()?></div>
-	<style>
-		body #productPageSimulator {}
-		body #productPageSimulator #shipping-simulator {
-			width: 100%;
-			display: inline-block;
-		}
-		body #productPageSimulator #shipping-simulator form {}
-		body #productPageSimulator #shipping-simulator form label {
-			width: 100%;
-			display: inline-block;
-			margin: 0;
-			padding: 15px 0;
-			color: var( --e-global-color-secondary );
-			font-family: "Bechtlers", Montserrat,sans-serif;
-			font-size: 18px;
-			font-weight: 600;
-			text-transform: capitalize;
-			line-height: 18px;
-			letter-spacing: 0.3px;
-		}
-		body #productPageSimulator #shipping-simulator form input#zipcode {
-			min-width: 200px;
-			display: inline-block;
-			margin: 0;
-			padding: 15px 15px;
-			border-radius: 15px 0 0 15px;
-			color: var( --e-global-color-secondary );
-			font-family: "Bechtlers", Montserrat,sans-serif;
-			font-size: 16px;
-			font-weight: 600;
-			text-transform: uppercase;
-			line-height: 16px;
-			letter-spacing: 0.3px;
-			height: 52px;
-			border-color: var( --e-global-color-secondary );
-		}
-		body #productPageSimulator #shipping-simulator form input#zipcode::-webkit-input-placeholder
-		{
-			color: var( --e-global-color-secondary );
-			font-family: "Bechtlers", Montserrat,sans-serif;
-			font-size: 16px;
-			font-weight: 600;
-			text-transform: uppercase;
-			line-height: 16px;
-			letter-spacing: 0.3px;
-		}
-		body #productPageSimulator #shipping-simulator form input#zipcode:-ms-input-placeholder
-		{
-			color: var( --e-global-color-secondary );
-			font-family: "Bechtlers", Montserrat,sans-serif;
-			font-size: 16px;
-			font-weight: 600;
-			text-transform: uppercase;
-			line-height: 16px;
-			letter-spacing: 0.3px;
-		}
-		body #productPageSimulator #shipping-simulator form input#zipcode::placeholder 
-		{
-			color: var( --e-global-color-secondary );
-			font-family: "Bechtlers", Montserrat,sans-serif;
-			font-size: 16px;
-			font-weight: 600;
-			text-transform: uppercase;
-			line-height: 16px;
-			letter-spacing: 0.3px;
-		}
-		body #productPageSimulator #shipping-simulator form button#idx-calc_shipping {
-			font-size: 16px;
-			font-weight: 600;
-			text-transform: uppercase;
-			line-height: 16px !important;
-			border-radius: 8px 8px 8px 8px;  
-			color: #FFFFFF;
-			background-color: var( --e-global-color-primary );
-			padding: 16px 25px 16px 25px !important;
-			margin: 0px 15px 0px 0px !important;
-			border-radius: 0 15px 15px 0;
-			height: 52px;
-		}
-		body #productPageSimulator #shipping-simulator form #simulator-data {
-		}
-		body #productPageSimulator #shipping-simulator form #simulator-data  #shipping-rates {
-			border: 1px solid var( --e-global-color-secondary );
-			border-radius: 15px;
-			padding: 15px 15px;
-		}
-		body #productPageSimulator #shipping-simulator form #simulator-data li {
-			width: 100%;
-			display: inline-block;
-			margin: 0;
-			padding: 15px 0;
-			color: var( --e-global-color-secondary );
-			font-family: "Bechtlers", Montserrat,sans-serif;
-			font-size: 18px;
-			font-weight: 600;
-			text-transform: capitalize;
-			line-height: 18px;
-			letter-spacing: 0.3px;
-		}
-	</style>
-
-	<script>
-		jQuery(function($){
-			var updateVar = setTimeout(function() {}, 1);
-			$(document).on('click', '.shopengine-qty-btn .plus', function () {
-				$('#productPageSimulator .qty_simulator').attr('value', $('.quantity .qty').val());
-				if(!$('#updateVar #simulator-data').is(':empty')){
-					clearTimeout(updateVar);
-					updateVar = setTimeout(function() {
-						$('#productPageSimulator #simulator-data').html();
-						$('#productPageSimulator #idx-calc_shipping').trigger('click');
-					}, 1000);
-				}
-			});
-			$(document).on('click', '.shopengine-qty-btn .minus', function () {
-				$('#productPageSimulator .qty_simulator').attr('value', $('.quantity .qty').val());
-				if(!$('#productPageSimulator #simulator-data').is(':empty')){
-					clearTimeout(updateVar);
-					updateVar = setTimeout(function() {
-						$('#productPageSimulator #simulator-data').html();
-						$('#productPageSimulator #idx-calc_shipping').trigger('click');
-					}, 1000);
-				}
-			});
-			
-			$("#productPageSimulator label").after($("#zipcode"))
-			
-			$("#productPageSimulator label").after($("#productPageSimulator #zipcode"))
-		})
-	</script>
-	<?php
-}
-
-add_shortcode( 'simulador_produto_frenet', 'simulador_produto_frenet' );
-
-function remove_admin_bar_links() {
-    global $wp_admin_bar;
-    $wp_admin_bar->remove_menu('view-site');        // Remove the view site link
-    $wp_admin_bar->remove_menu('view-store');        // Remove the view site link
-}
-add_action( 'wp_before_admin_bar_render', 'remove_admin_bar_links' );
-
-*/
+$GLOBALS['HelloElementorOptimizedChild'] = HelloElementorOptimizedChild::get_instance();
